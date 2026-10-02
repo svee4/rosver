@@ -1,0 +1,19 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rosver</title>
+    <link rel="stylesheet" href="layout.css" />
+
+    @if (ViewData["OpenGraph"] is OpenGraphDto og)
+    {
+        <meta property="og:site_name" content="@og.SiteName" />
+        <meta property="og:title" content="@og.Title" />
+        <meta property="og:description" content="@og.Description" />
+    }
+</head>
+<body>
+    @RenderBody()
+</body>
+</html>

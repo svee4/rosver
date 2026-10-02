@@ -1,0 +1,93 @@
+﻿@page "/"
+@using System.Globalization
+@using Microsoft.AspNetCore.Html
+@model IndexModel
+
+<main>
+	<h2>
+		Specify an SDK version or version prefix to get the Roslyn version it ships,
+		or specify a Roslyn version or version prefix to get the SDKs that ship it.
+	</h2>
+
+	<p>
+		(.NET 10 and up)
+		Last update: @(Model.LastUpdate?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)) UTC
+	</p>
+
+	<form method="get" id="form">
+		<div id="input-container-container">
+			<div id="sdk-container" class="input-container">
+				<label for="sdk-input">SDK version: </label>
+				<input type="text" name="sdk" id="sdk-input" value="@(Model.SdkInput ?? "")" />
+			</div>
+			<div id="roslyn-container" class="input-container">
+				<label for="roslyn-input">Roslyn version: </label>
+				<input type="text" name="roslyn" id="roslyn-input" value="@(Model.RoslynInput ?? "")" />
+			</div>
+		</div>
+		<button type="submit">Get</button>
+	</form>
+
+	<div id="error-container">
+		<p>
+			@Model.ErrorMessage
+		</p>
+	</div>
+
+	<div id="result-container">
+		@if (Model.SdkInput is { } sdkInput && Model.RoslynVersions is { } roslyns)
+		{
+			<text>
+				SDK version @Version(sdkInput) ships the following Roslyn versions:
+			</text>
+
+			<ul>
+				@foreach (var pair in roslyns)
+				{
+					<li>
+						@Version(pair.Sdk) @Arrow() @Version(pair.Roslyn)
+					</li>
+				}
+			</ul>
+		}
+		else if (Model.RoslynInput is { } roslynInput && Model.SdkVersions is { } sdks)
+		{
+			<text>
+				Roslyn version @Version(roslynInput) is shipped with the following SDKs:
+			</text>
+
+			<ul>
+				@foreach (var pair in sdks)
+				{
+					<li>
+						@Version(pair.Roslyn) @Arrow() @Version(pair.Sdk)
+					</li>
+				}
+			</ul>
+		}
+		else if (Model.All is { } all)
+		{
+			<ul>
+				@foreach (var pair in all)
+				{
+					<li>
+						@Version(pair.Sdk) @Arrow() @Version(pair.Roslyn)
+					</li>
+				}
+			</ul>
+		}
+
+	</div>
+
+</main>
+
+@functions {
+	IHtmlContent Version(string version)
+		=> new HtmlContentBuilder()
+			.AppendHtml("<code>")
+			.Append(version)
+			.AppendHtml("</code>");
+
+	IHtmlContent Arrow()
+		=> new HtmlString("→");
+}
