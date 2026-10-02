@@ -28,7 +28,7 @@ public sealed partial class RosverBackgroundService(
     private Dictionary<string, string>? _map;
 
     private string CacheFilePath { get; } = hostEnvironment.IsDevelopment()
-        ? (configuration["CacheFilePath"] ?? "./cache.json")
+        ? (configuration["CacheFilePath"] ?? AppContext.BaseDirectory + "./cache.json")
         : configuration.GetRequiredValue("CacheFilePath");
 
     private TimeSpan CacheTime { get; } = configuration.GetRequiredParsedValue<TimeSpan>("CacheTime");
