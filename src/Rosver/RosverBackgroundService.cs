@@ -210,6 +210,11 @@ public sealed partial class RosverBackgroundService(
                         return;
                     }
 
+                    if (tag.StartsWith('v'))
+                    {
+                        tag = tag.Substring(1);
+                    }
+
                     result.TryAdd(
                         tag,
                         $"{properties["MajorVersion"]}.{properties["MinorVersion"]}.{properties["PatchVersion"]}");                  
