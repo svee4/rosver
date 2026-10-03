@@ -155,35 +155,64 @@ public sealed partial class RosverBackgroundService(
 
             var result = new System.Collections.Concurrent.ConcurrentDictionary<string, string>();
 
-            const string Pkg = "Microsoft.Net.Compilers.Toolset";
-
             await Parallel.ForEachAsync(
                 sdkTags,
-                new ParallelOptions { MaxDegreeOfParallelism = 8, CancellationToken = token, },
+                new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = token, },
                 async (tag, ct) =>
                 {
-                    var url = $"https://raw.githubusercontent.com/dotnet/dotnet/{tag}/src/sdk/eng/Version.Details.xml";
+                    var manifestUrl = $"https://raw.githubusercontent.com/dotnet/dotnet/{tag}/src/source-manifest.json";
 
                     string str;
 
                     try
                     {
-                        str = await httpClient.GetStringAsync(url, ct);
+                        str = await httpClient.GetStringAsync(manifestUrl, ct);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Error fetching {url}", url);
+                        _logger.LogError(ex, "Error fetching {url}", manifestUrl);
                         return;
                     }
 
-                    var doc = XDocument.Parse(str);
-                    var dep = doc.Descendants("Dependency").FirstOrDefault(d => (string?)d.Attribute("Name") == Pkg);
-                    var ver = dep?.Element("Version")?.Value ?? (string?)dep?.Attribute("Version");
+                    using var doc = JsonDocument.Parse(str);
 
-                    if (ver is not null)
+                    string? roslynCommit = null;
+
+                    foreach (var repo in doc.RootElement.GetProperty("repositories").EnumerateArray())
                     {
-                        result[tag[1..]] = ver;
+                        if (repo.GetProperty("path").GetString() == "roslyn")
+                        {
+                            roslynCommit = repo.GetProperty("commitSha").GetString();
+                        }
                     }
+
+                    if (roslynCommit is null)
+                    {
+                        return;
+                    }
+
+                    var roslynPropsUrl = $"https://raw.githubusercontent.com/dotnet/roslyn/{roslynCommit}/eng/Versions.props";
+
+                    var roslynXml = await httpClient.GetStringAsync(roslynPropsUrl, token);
+                    var roslynDoc = XDocument.Parse(roslynXml);
+
+                    var properties = roslynDoc.Descendants("PropertyGroup")
+                        .Elements()
+                        .Where(e =>
+                            e.Name == "MajorVersion" ||
+                            e.Name == "MinorVersion" ||
+                            e.Name == "PatchVersion")
+                        .ToDictionary(e => e.Name.LocalName, e => e.Value);
+
+                    if (properties.Count != 3)
+                    {
+                        _logger.LogWarning("Missing version properties for {tag}", tag);
+                        return;
+                    }
+
+                    result.TryAdd(
+                        tag,
+                        $"{properties["MajorVersion"]}.{properties["MinorVersion"]}.{properties["PatchVersion"]}");                  
                 });
 
             var map = result.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
