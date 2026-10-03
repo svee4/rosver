@@ -26,19 +26,14 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .AddSource(RosverOtlp.ActivitySourceName)
         .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddOtlpExporter())
+        .AddHttpClientInstrumentation())
     .WithMetrics(metrics => metrics
         .AddMeter(RosverOtlp.MeterName)
         .AddRuntimeInstrumentation()
         .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddOtlpExporter());
-
-builder.Logging.AddOpenTelemetry(logging =>
-{
-    logging.AddOtlpExporter();
-});
+        .AddHttpClientInstrumentation())
+    .WithLogging()
+    .UseOtlpExporter();
 
 builder.Logging.AddSimpleConsole();
 
