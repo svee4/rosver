@@ -10,7 +10,9 @@
 	</h2>
 
 	<p>
-		(.NET 10 and up)
+		(.NET 10 and up - lower might or might not work)
+	</p>
+	<p>
 		Last update: @(Model.LastUpdate?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)) UTC
 	</p>
 
@@ -80,6 +82,10 @@
 	</div>
 
 </main>
+
+<footer>
+	<a href="https://github.com/svee4/rosver">https://github.com/svee4/rosver</a>
+</footer>
 
 @functions {
 	IHtmlContent Version(string version)
