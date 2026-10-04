@@ -71,6 +71,8 @@ public sealed partial class RosverBackgroundService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogInformation("Cache timeout is {CacheTime}", CacheTime);
+
         RosverOtlp.Meter.CreateObservableGauge(
             "rosver.map.entries",
             () => _map?.Count ?? -1,
